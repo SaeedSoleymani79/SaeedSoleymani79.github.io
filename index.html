@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Saeid Soleimani | Software Developer & Audio Engineer</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0a0a0f;
+            --surface-color: #15151e;
+            --primary-color: #00ffcc;
+            --text-main: #f0f0f0;
+            --text-muted: #888899;
+            --font-main: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: var(--font-main);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 20px 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(10, 10, 15, 0.9);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            letter-spacing: 2px;
+        }
+
+        .logo span {
+            color: var(--primary-color);
+        }
+
+        .nav-links a {
+            color: var(--text-main);
+            text-decoration: none;
+            margin-left: 30px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: var(--primary-color);
+        }
+
+        /* Sections */
+        section {
+            padding: 100px 10vw;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            margin-bottom: 50px;
+            font-weight: 800;
+            position: relative;
+            display: inline-block;
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: -10px;
+            width: 50px;
+            height: 4px;
+            background: var(--primary-color);
+        }
+
+        /* Hero Section */
+        #hero {
+            align-items: flex-start;
+        }
+
+        .hero-subtitle {
+            color: var(--primary-color);
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .hero-title {
+            font-size: 5rem;
+            font-weight: 900;
+            line-height: 1.1;
+            margin-bottom: 20px;
+        }
+
+        .hero-desc {
+            color: var(--text-muted);
+            font-size: 1.2rem;
+            max-width: 600px;
+            margin-bottom: 40px;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            background: transparent;
+            color: var(--primary-color);
+            border: 2px solid var(--primary-color);
+            text-decoration: none;
+            font-weight: 700;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background: var(--primary-color);
+            color: var(--bg-color);
+            box-shadow: 0 0 20px rgba(0, 255, 204, 0.4);
+        }
+
+        /* Skills Section */
+        .skills-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+        }
+
+        .skill-card {
+            background: var(--surface-color);
+            padding: 30px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: transform 0.3s;
+        }
+
+        .skill-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary-color);
+        }
+
+        .skill-icon {
+            font-size: 2.5rem;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+        }
+
+        .skill-card h3 {
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+
+        .skill-list {
+            list-style: none;
+            color: var(--text-muted);
+        }
+
+        .skill-list li {
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+        }
+
+        .skill-list li::before {
+            content: '▹';
+            color: var(--primary-color);
+            margin-right: 10px;
+        }
+
+        /* Projects Section */
+        .project-card {
+            background: var(--surface-color);
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            margin-bottom: 40px;
+        }
+
+        .project-content {
+            padding: 40px;
+            flex: 1;
+        }
+
+        .project-label {
+            color: var(--primary-color);
+            font-size: 0.9rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .project-title {
+            font-size: 2rem;
+            margin-bottom: 20px;
+        }
+
+        .project-desc {
+            color: var(--text-muted);
+            margin-bottom: 25px;
+        }
+
+        .tech-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .tech-tag {
+            background: rgba(0, 255, 204, 0.1);
+            color: var(--primary-color);
+            padding: 5px 12px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-family: monospace;
+        }
+
+        /* Contact Section */
+        .contact-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 50px;
+        }
+
+        .contact-text {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        .contact-methods {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .contact-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 1.1rem;
+            color: var(--text-main);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .contact-item:hover {
+            color: var(--primary-color);
+        }
+
+        .contact-item i {
+            color: var(--primary-color);
+            font-size: 1.5rem;
+            width: 30px;
+            text-align: center;
+        }
+
+        footer {
+            text-align: center;
+            padding: 30px;
+            color: var(--text-muted);
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            .hero-title { font-size: 3rem; }
+            .project-card { flex-direction: column; }
+            .contact-content { grid-template-columns: 1fr; }
+            .nav-links { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="logo">Saeid<span>.</span></div>
+        <div class="nav-links">
+            <a href="#about">About</a>
+            <a href="#skills">Skills</a>
+            <a href="#projects">Projects</a>
+            <a href="#contact">Contact</a>
+        </div>
+    </nav>
+
+    <section id="hero">
+        <div class="hero-subtitle">Software Developer</div>
+        <h1 class="hero-title">Saeid Soleimani</h1>
+        <p class="hero-desc">
+            Computer Engineer specializing in audio software development, digital signal processing, and computer vision. Currently based in Cremona, Italy, pursuing a Master's in Music and Acoustic Engineering.
+        </p>
+        <a href="#projects" class="btn">View My Work</a>
+    </section>
+
+    <section id="skills">
+        <h2 class="section-title">Technical Expertise</h2>
+        <div class="skills-grid">
+            <div class="skill-card">
+                <i class="fa-solid fa-code skill-icon"></i>
+                <h3>Languages & Frameworks</h3>
+                <ul class="skill-list">
+                    <li>Python & Django</li>
+                    <li>C++</li>
+                    <li>JavaScript, HTML5, CSS3</li>
+                </ul>
+            </div>
+            <div class="skill-card">
+                <i class="fa-solid fa-sliders skill-icon"></i>
+                <h3>Audio Technology</h3>
+                <ul class="skill-list">
+                    <li>JUCE Framework</li>
+                    <li>SuperCollider</li>
+                    <li>Digital Signal Processing (DSP)</li>
+                    <li>MIDI Tool Development</li>
+                </ul>
+            </div>
+            <div class="skill-card">
+                <i class="fa-solid fa-microchip skill-icon"></i>
+                <h3>Libraries & Tools</h3>
+                <ul class="skill-list">
+                    <li>NumPy & SciPy</li>
+                    <li>WebSockets & SoundDevice</li>
+                    <li>Computer Vision Algorithms</li>
+                    <li>Git & GitHub</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <section id="projects">
+        <h2 class="section-title">Featured Project</h2>
+        
+        <div class="project-card">
+            <div class="project-content">
+                <div class="project-label">Academic Development / Audio Engineering</div>
+                <h3 class="project-title">ACTAM PRO | Audio Suite</h3>
+                <p class="project-desc">
+                    A low-latency, real-time hybrid web-to-Python audio synthesizer and performance suite. Built on a decoupled Client-Server architecture, separating the visual interface and sequence logic in the browser from the heavy digital signal processing happening in a high-performance Python backend.
+                </p>
+                <p class="project-desc">
+                    <strong>Key Features:</strong> Advanced 16-step rhythmic drum machine, smart chord pads with physical modeling for authentic guitar voicings, and a Master Effects DSP rack (Tremolo, Delay, Reverb) controlled via WebSocket JSON payloads.
+                </p>
+                <div class="tech-tags">
+                    <span class="tech-tag">Python 3</span>
+                    <span class="tech-tag">WebSockets</span>
+                    <span class="tech-tag">NumPy / SciPy</span>
+                    <span class="tech-tag">SoundDevice</span>
+                    <span class="tech-tag">Vanilla JS / UI</span>
+                </div>
+                <a href="https://github.com/SaeedSoleymani79" target="_blank" class="btn"><i class="fa-brands fa-github"></i> View Repository</a>
+            </div>
+        </div>
+    </section>
+
+    <section id="contact">
+        <h2 class="section-title">Get In Touch</h2>
+        <div class="contact-content">
+            <div>
+                <p class="contact-text">
+                    I am actively seeking opportunities to collaborate on innovative software projects, particularly those bridging the gap between computer engineering and audio technology. Whether you have a project in mind or just want to connect, my inbox is open.
+                </p>
+            </div>
+            <div class="contact-methods">
+                <a href="mailto:sasoleymani1379@gmail.com" class="contact-item">
+                    <i class="fa-regular fa-envelope"></i>
+                    sasoleymani1379@gmail.com
+                </a>
+                <a href="https://github.com/SaeedSoleymani79" target="_blank" class="contact-item">
+                    <i class="fa-brands fa-github"></i>
+                    github.com/SaeedSoleymani79
+                </a>
+                <div class="contact-item">
+                    <i class="fa-brands fa-whatsapp"></i>
+                    +39 393 151 6221 (Italy)
+                </div>
+                <div class="contact-item">
+                    <i class="fa-brands fa-telegram"></i>
+                    +98 938 916 2516 (Iran)
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <p>&copy; 2026 Saeid Soleimani. Built from scratch.</p>
+    </footer>
+
+    <script>
+        // Simple smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+    </script>
+</body>
+</html>
