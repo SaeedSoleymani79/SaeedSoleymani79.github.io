@@ -34,14 +34,14 @@
         }
 
         /* HTML5 Canvas Background */
-        #grid-canvas {
+        #patchbay-canvas {
             position: fixed;
             top: 0;
             left: 0;
             width: 100vw;
             height: 100vh;
             z-index: -1;
-            pointer-events: none;
+            pointer-events: auto; /* allows mouse interaction */
         }
 
         /* Ambient Vignette Glow over Canvas */
@@ -505,8 +505,8 @@
 </head>
 <body>
 
-    <!-- 3D Wireframe Horizon Grid Canvas Background -->
-    <canvas id="grid-canvas"></canvas>
+    <!-- Modular Synthesizer Patch Bay Canvas Background -->
+    <canvas id="patchbay-canvas"></canvas>
 
     <nav id="navbar">
         <div class="logo">Saeid<span>.</span></div>
@@ -716,116 +716,174 @@
     </footer>
 
     <script>
-        // --- 3D Wireframe Horizon Grid Canvas Animation ---
-        const canvas = document.getElementById('grid-canvas');
+        // --- Modular Synthesizer Patch Bay Canvas Animation ---
+        const canvas = document.getElementById('patchbay-canvas');
         const ctx = canvas.getContext('2d');
         
         let width, height;
-        let mouse = { x: 0, y: 0, targetX: 0, targetY: 0 };
+        let nodes = [];
+        let cables = [];
+        let pulses = [];
+        let mouse = { x: null, y: null };
+
+        const labels = ["VCO", "VCF", "VCA", "LFO", "ENV", "DELAY", "DSP", "MIDI", "OUT", "IN", "GATE", "TRIG"];
 
         function initCanvas() {
             width = canvas.width = window.innerWidth;
             height = canvas.height = window.innerHeight;
+
+            // Create synth patch nodes
+            nodes = [];
+            const count = Math.floor((width * height) / 45000); // density responsive
+            for (let i = 0; i < count; i++) {
+                nodes.push({
+                    x: Math.random() * width,
+                    y: Math.random() * height,
+                    vx: (Math.random() - 0.5) * 0.4,
+                    vy: (Math.random() - 0.5) * 0.4,
+                    radius: Math.random() * 4 + 5,
+                    label: labels[Math.floor(Math.random() * labels.length)],
+                    pulseTimer: Math.random() * 100
+                });
+            }
+
+            // Create cables connecting nearby nodes
+            cables = [];
+            for (let i = 0; i < nodes.length; i++) {
+                for (let j = i + 1; j < nodes.length; j++) {
+                    let dx = nodes[i].x - nodes[j].x;
+                    let dy = nodes[i].y - nodes[j].y;
+                    let dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < 220) {
+                        cables.push({
+                            from: i,
+                            to: j,
+                            progress: Math.random()
+                        });
+                    }
+                }
+            }
         }
 
         window.addEventListener('mousemove', (e) => {
-            mouse.targetX = (e.clientX - width / 2) * 0.04;
-            mouse.targetY = (e.clientY - height / 2) * 0.02;
+            mouse.x = e.clientX;
+            mouse.y = e.clientY;
         });
 
-        let time = 0;
+        window.addEventListener('mouseout', () => {
+            mouse.x = null;
+            mouse.y = null;
+        });
+
+        window.addEventListener('click', (e) => {
+            // Spawn an interactive signal pulse burst at click location
+            for (let i = 0; i < nodes.length; i++) {
+                let dx = nodes[i].x - e.clientX;
+                let dy = nodes[i].y - e.clientY;
+                if (Math.sqrt(dx * dx + dy * dy) < 150) {
+                    nodes[i].pulseTimer = 0;
+                }
+            }
+        });
+
         function animateCanvas() {
             requestAnimationFrame(animateCanvas);
 
-            // Smooth mouse interpolation
-            mouse.x += (mouse.targetX - mouse.x) * 0.05;
-            mouse.y += (mouse.targetY - mouse.y) * 0.05;
-
-            // Clear screen
-            ctx.fillStyle = '#02050f';
+            // Soft clearing trail
+            ctx.fillStyle = 'rgba(2, 5, 15, 0.25)';
             ctx.fillRect(0, 0, width, height);
 
-            const horizonY = height * 0.5 + mouse.y;
+            // Update and draw cables (patch cords)
+            cables.forEach(cable => {
+                let n1 = nodes[cable.from];
+                let n2 = nodes[cable.to];
 
-            // Draw subtle sky gradient above horizon
-            let skyGrad = ctx.createLinearGradient(0, 0, 0, horizonY);
-            skyGrad.addColorStop(0, '#02050f');
-            skyGrad.addColorStop(1, '#0a1428');
-            ctx.fillStyle = skyGrad;
-            ctx.fillRect(0, 0, width, horizonY);
+                let dx = n1.x - n2.x;
+                let dy = n1.y - n2.y;
+                let dist = Math.sqrt(dx * dx + dy * dy);
 
-            // Glowing horizon line
-            ctx.strokeStyle = 'rgba(0, 210, 255, 0.55)';
-            ctx.lineWidth = 2;
-            ctx.shadowColor = '#00d2ff';
-            ctx.shadowBlur = 18;
-            ctx.beginPath();
-            ctx.moveTo(0, horizonY);
-            ctx.lineTo(width, horizonY);
-            ctx.stroke();
-            ctx.shadowBlur = 0; // reset shadow
+                if (dist < 280) {
+                    let alpha = (1 - (dist / 280)) * 0.35;
+                    ctx.strokeStyle = `rgba(58, 134, 255, ${alpha})`;
+                    ctx.lineWidth = 1.2;
 
-            const fov = 350;
-            const gridSpacing = 50;
-            const speed = 0.6;
-            
-            time += speed;
-            let zOffset = time % gridSpacing;
+                    // Draw organic hanging curve (simulating patch cable slack)
+                    ctx.beginPath();
+                    ctx.moveTo(n1.x, n1.y);
+                    let cx = (n1.x + n2.x) / 2;
+                    let cy = (n1.y + n2.y) / 2 + 25; // cable droop
+                    ctx.quadraticCurveTo(cx, cy, n2.x, n2.y);
+                    ctx.stroke();
 
-            // Draw horizontal grid lines moving forward
-            for (let z = gridSpacing - zOffset; z < 900; z += gridSpacing) {
-                let depthFactor = 1 - (z / 900);
-                ctx.strokeStyle = `rgba(0, 210, 255, ${depthFactor * 0.35})`;
-                ctx.lineWidth = depthFactor * 1.5;
+                    // Traveling signal pulse along cable from left to right
+                    cable.progress += 0.006;
+                    if (cable.progress > 1) cable.progress = 0;
 
-                ctx.beginPath();
-                let first = true;
-                for (let x = -width * 1.5; x <= width * 1.5; x += 30) {
-                    let waveY = Math.sin(x * 0.005 + time * 0.02) * Math.cos(z * 0.005 + time * 0.02) * 18;
-                    
-                    let px = (x / z) * fov + (width / 2) + mouse.x;
-                    let py = horizonY + ((waveY + 140) / z) * fov;
+                    let t = cable.progress;
+                    // Quadratic bezier point formula
+                    let px = (1 - t) * (1 - t) * n1.x + 2 * (1 - t) * t * cx + t * t * n2.x;
+                    let py = (1 - t) * (1 - t) * n1.y + 2 * (1 - t) * t * cy + t * t * n2.y;
 
-                    if (py >= horizonY) {
-                        if (first) {
-                            ctx.moveTo(px, py);
-                            first = false;
-                        } else {
-                            ctx.lineTo(px, py);
-                        }
+                    ctx.fillStyle = '#00d2ff';
+                    ctx.shadowColor = '#00d2ff';
+                    ctx.shadowBlur = 10;
+                    ctx.beginPath();
+                    ctx.arc(px, py, 2.2, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                }
+            });
+
+            // Update and draw nodes
+            nodes.forEach(node => {
+                node.x += node.vx;
+                node.y += node.vy;
+
+                // Bounce off screen bounds
+                if (node.x < 30 || node.x > width - 30) node.vx *= -1;
+                if (node.y < 30 || node.y > height - 30) node.vy *= -1;
+
+                // Mouse interaction / attraction
+                if (mouse.x !== null && mouse.y !== null) {
+                    let mdx = node.x - mouse.x;
+                    let mdy = node.y - mouse.y;
+                    let mDist = Math.sqrt(mdx * mdx + mdy * mdy);
+                    if (mDist < 160) {
+                        let force = (1 - (mDist / 160)) * 1.5;
+                        node.x += (mdx / mDist) * force;
+                        node.y += (mdy / mDist) * force;
                     }
                 }
-                ctx.stroke();
-            }
 
-            // Draw vertical perspective grid lines
-            for (let x = -width * 1.5; x <= width * 1.5; x += gridSpacing) {
+                node.pulseTimer += 0.02;
+                let pulseAlpha = (Math.sin(node.pulseTimer) + 1) / 2;
+
+                // Outer terminal ring
+                ctx.strokeStyle = `rgba(0, 210, 255, ${0.3 + pulseAlpha * 0.5})`;
+                ctx.lineWidth = 1.5;
                 ctx.beginPath();
-                let first = true;
-                for (let z = 10; z < 900; z += 15) {
-                    let actualZ = z - zOffset;
-                    if (actualZ <= 5) continue;
-
-                    let waveY = Math.sin(x * 0.005 + time * 0.02) * Math.cos(actualZ * 0.005 + time * 0.02) * 18;
-                    
-                    let px = (x / actualZ) * fov + (width / 2) + mouse.x;
-                    let py = horizonY + ((waveY + 140) / actualZ) * fov;
-
-                    let depthFactor = 1 - (actualZ / 900);
-                    ctx.strokeStyle = `rgba(58, 134, 255, ${depthFactor * 0.3})`;
-                    ctx.lineWidth = depthFactor * 1.2;
-
-                    if (py >= horizonY) {
-                        if (first) {
-                            ctx.moveTo(px, py);
-                            first = false;
-                        } else {
-                            ctx.lineTo(px, py);
-                        }
-                    }
-                }
+                ctx.arc(node.x, node.y, node.radius + 3, 0, Math.PI * 2);
                 ctx.stroke();
-            }
+
+                // Inner module jack
+                ctx.fillStyle = '#0a1226';
+                ctx.beginPath();
+                ctx.arc(node.x, node.y, node.radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = '#3a86ff';
+                ctx.stroke();
+
+                // Core pin light
+                ctx.fillStyle = pulseAlpha > 0.8 ? '#00d2ff' : '#3a86ff';
+                ctx.beginPath();
+                ctx.arc(node.x, node.y, 2, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Module label
+                ctx.fillStyle = 'rgba(148, 163, 184, 0.7)';
+                ctx.font = '9px monospace';
+                ctx.fillText(node.label, node.x + node.radius + 6, node.y + 3);
+            });
         }
 
         window.addEventListener('resize', initCanvas);
