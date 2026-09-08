@@ -44,7 +44,7 @@
             pointer-events: none;
         }
 
-        /* Ambient Glow over Canvas */
+        /* Ambient Vignette Glow over Canvas */
         body::before {
             content: '';
             position: fixed;
@@ -78,7 +78,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: rgba(2, 5, 15, 0.7);
+            background: rgba(2, 5, 15, 0.75);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
             z-index: 1000;
@@ -505,7 +505,7 @@
 </head>
 <body>
 
-    <!-- DSP Wave Background -->
+    <!-- DSP Constellation Canvas Background -->
     <canvas id="dsp-canvas"></canvas>
 
     <nav id="navbar">
@@ -716,54 +716,119 @@
     </footer>
 
     <script>
-        // --- 1. Audio DSP Canvas Animation ---
+        // --- Interactive Constellation & Audio Wave Canvas ---
         const canvas = document.getElementById('dsp-canvas');
         const ctx = canvas.getContext('2d');
         
         let width, height;
-        let waves = [];
+        let particles = [];
+        let mouse = { x: null, y: null, radius: 150 };
 
         function initCanvas() {
             width = canvas.width = window.innerWidth;
             height = canvas.height = window.innerHeight;
             
-            // Create 3 overlapping audio wave representations
-            waves = [
-                { yOffset: 0.5, amplitude: 50, length: 0.005, speed: 0.02, color: 'rgba(0, 210, 255, 0.4)' },
-                { yOffset: 0.5, amplitude: 80, length: 0.003, speed: 0.015, color: 'rgba(58, 134, 255, 0.3)' },
-                { yOffset: 0.5, amplitude: 30, length: 0.008, speed: 0.03, color: 'rgba(255, 255, 255, 0.15)' }
-            ];
+            particles = [];
+            const numberOfParticles = Math.floor((width * height) / 20000);
+            for (let i = 0; i < numberOfParticles; i++) {
+                particles.push({
+                    x: Math.random() * width,
+                    y: Math.random() * height,
+                    vx: (Math.random() - 0.5) * 0.6,
+                    vy: (Math.random() - 0.5) * 0.6,
+                    radius: Math.random() * 1.8 + 0.8,
+                    baseAlpha: Math.random() * 0.4 + 0.2
+                });
+            }
         }
+
+        window.addEventListener('mousemove', (e) => {
+            mouse.x = e.clientX;
+            mouse.y = e.clientY;
+        });
+
+        window.addEventListener('mouseout', () => {
+            mouse.x = null;
+            mouse.y = null;
+        });
 
         let time = 0;
         function animateCanvas() {
             requestAnimationFrame(animateCanvas);
             
-            // Clear canvas with a slight trail effect
-            ctx.fillStyle = 'rgba(2, 5, 15, 0.2)'; 
+            // Clear with fading trail for smoothness
+            ctx.fillStyle = 'rgba(2, 5, 15, 0.25)';
             ctx.fillRect(0, 0, width, height);
 
-            ctx.globalCompositeOperation = 'lighter'; // Makes overlapping colors glow
+            ctx.globalCompositeOperation = 'lighter';
 
-            waves.forEach(wave => {
+            // Draw underlying flowing DSP frequency waves
+            for (let w = 0; w < 2; w++) {
                 ctx.beginPath();
-                ctx.moveTo(0, height * wave.yOffset);
-                
-                for (let i = 0; i < width; i++) {
-                    // Complex sine wave function mimicking organic DSP signal
-                    let y = Math.sin(i * wave.length + time * wave.speed) * wave.amplitude * Math.sin(time * 0.5);
-                    y += Math.sin(i * wave.length * 2 + time * wave.speed * 1.5) * (wave.amplitude * 0.5); // harmonics
-                    
-                    ctx.lineTo(i, height * wave.yOffset + y);
+                let yOffset = height * (0.35 + w * 0.3);
+                ctx.moveTo(0, yOffset);
+                for (let x = 0; x < width; x += 3) {
+                    let wave = Math.sin(x * 0.003 + time * 0.02 + w) * 40 * Math.sin(time * 0.008 + x * 0.0008);
+                    wave += Math.cos(x * 0.007 - time * 0.015) * 18;
+                    ctx.lineTo(x, yOffset + wave);
                 }
-                
-                ctx.strokeStyle = wave.color;
-                ctx.lineWidth = 2;
+                ctx.strokeStyle = w === 0 ? 'rgba(0, 210, 255, 0.12)' : 'rgba(58, 134, 255, 0.09)';
+                ctx.lineWidth = 1.5;
                 ctx.stroke();
-            });
+            }
+
+            // Update and render constellation particles
+            for (let i = 0; i < particles.length; i++) {
+                let p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+
+                if (p.x < 0 || p.x > width) p.vx *= -1;
+                if (p.y < 0 || p.y > height) p.vy *= -1;
+
+                // Particle Dot
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(0, 210, 255, ${p.baseAlpha})`;
+                ctx.fill();
+
+                // Connect nearby particles
+                for (let j = i + 1; j < particles.length; j++) {
+                    let p2 = particles[j];
+                    let dx = p.x - p2.x;
+                    let dy = p.y - p2.y;
+                    let dist = Math.sqrt(dx * dx + dy * dy);
+
+                    if (dist < 130) {
+                        ctx.beginPath();
+                        ctx.moveTo(p.x, p.y);
+                        ctx.lineTo(p2.x, p2.y);
+                        let alpha = (1 - (dist / 130)) * 0.22;
+                        ctx.strokeStyle = `rgba(58, 134, 255, ${alpha})`;
+                        ctx.lineWidth = 0.7;
+                        ctx.stroke();
+                    }
+                }
+
+                // Mouse interaction lines
+                if (mouse.x !== null && mouse.y !== null) {
+                    let mdx = p.x - mouse.x;
+                    let mdy = p.y - mouse.y;
+                    let mdist = Math.sqrt(mdx * mdx + mdy * mdy);
+                    if (mdist < mouse.radius) {
+                        ctx.beginPath();
+                        ctx.moveTo(p.x, p.y);
+                        ctx.lineTo(mouse.x, mouse.y);
+                        let mAlpha = (1 - (mdist / mouse.radius)) * 0.35;
+                        ctx.strokeStyle = `rgba(0, 210, 255, ${mAlpha})`;
+                        ctx.lineWidth = 0.9;
+                        ctx.stroke();
+                    }
+                }
+            }
 
             ctx.globalCompositeOperation = 'source-over';
-            time += 1;
+            time += 0.6;
         }
 
         window.addEventListener('resize', initCanvas);
@@ -771,7 +836,7 @@
         animateCanvas();
 
 
-        // --- 2. Smooth Scrolling & Intersection Observers ---
+        // --- UI Interactions & Smooth Scrolling ---
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function (e) {
                 e.preventDefault();
