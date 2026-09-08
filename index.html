@@ -7,14 +7,15 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         :root {
-            --bg-color: #050508;
-            --surface-color: rgba(21, 21, 30, 0.6);
-            --primary-color: #00ffcc;
-            --secondary-color: #7000ff;
-            --text-main: #f0f0f0;
-            --text-muted: #888899;
+            /* New Dark Blue Theme Colors */
+            --bg-color: #060b14;
+            --surface-color: rgba(16, 26, 46, 0.6);
+            --primary-color: #3a86ff;
+            --secondary-color: #00d2ff;
+            --text-main: #f0f4f8;
+            --text-muted: #94a3b8;
             --font-main: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-border: rgba(58, 134, 255, 0.2);
         }
 
         * {
@@ -26,8 +27,8 @@
         body {
             background-color: var(--bg-color);
             background-image: 
-                radial-gradient(circle at 15% 50%, rgba(0, 255, 204, 0.03) 0%, transparent 50%),
-                radial-gradient(circle at 85% 30%, rgba(112, 0, 255, 0.04) 0%, transparent 50%);
+                radial-gradient(circle at 15% 50%, rgba(58, 134, 255, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 85% 30%, rgba(0, 210, 255, 0.04) 0%, transparent 50%);
             color: var(--text-main);
             font-family: var(--font-main);
             line-height: 1.6;
@@ -55,7 +56,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: rgba(5, 5, 8, 0.85);
+            background: rgba(6, 11, 20, 0.85);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             z-index: 1000;
@@ -157,7 +158,7 @@
             font-weight: 900;
             line-height: 1.1;
             margin-bottom: 25px;
-            background: linear-gradient(to right, #fff, #a3a3b5);
+            background: linear-gradient(to right, #ffffff, #73a5ff);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             animation: fadeInLeft 1s ease-out 0.2s both;
@@ -211,8 +212,8 @@
         }
 
         .btn:hover {
-            color: var(--bg-color);
-            box-shadow: 0 0 20px rgba(0, 255, 204, 0.4);
+            color: #fff;
+            box-shadow: 0 0 20px rgba(58, 134, 255, 0.4);
         }
 
         /* Skills Section */
@@ -234,12 +235,12 @@
         .skill-card:hover {
             transform: translateY(-10px);
             border-color: var(--primary-color);
-            background: rgba(21, 21, 30, 0.9);
+            background: rgba(16, 26, 46, 0.9);
         }
 
         .skill-icon {
             font-size: 2.5rem;
-            background: linear-gradient(135deg, var(--primary-color), #00b3ff);
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             margin-bottom: 25px;
@@ -337,7 +338,7 @@
 
         .timeline-item:hover .timeline-content {
             transform: translateY(-5px);
-            border-color: rgba(0, 255, 204, 0.3);
+            border-color: rgba(58, 134, 255, 0.4);
         }
 
         .date {
@@ -381,7 +382,7 @@
         .project-card:hover {
             transform: translateY(-5px);
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-            border-color: rgba(0, 255, 204, 0.4);
+            border-color: rgba(58, 134, 255, 0.5);
         }
 
         .project-content {
@@ -423,13 +424,13 @@
         }
 
         .tech-tag {
-            background: rgba(0, 255, 204, 0.05);
-            color: #00e6b8;
+            background: rgba(58, 134, 255, 0.1);
+            color: #73a5ff;
             padding: 6px 14px;
             border-radius: 20px;
             font-size: 0.8rem;
             font-family: monospace;
-            border: 1px solid rgba(0, 255, 204, 0.2);
+            border: 1px solid rgba(58, 134, 255, 0.3);
         }
 
         /* Contact Section */
@@ -471,7 +472,7 @@
 
         .contact-item:hover {
             color: var(--primary-color);
-            background: rgba(0, 255, 204, 0.05);
+            background: rgba(58, 134, 255, 0.1);
             transform: translateX(10px);
         }
 
