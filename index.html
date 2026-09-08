@@ -34,7 +34,7 @@
         }
 
         /* HTML5 Canvas Background */
-        #fft-canvas {
+        #grid-canvas {
             position: fixed;
             top: 0;
             left: 0;
@@ -505,8 +505,8 @@
 </head>
 <body>
 
-    <!-- Ambient FFT Spectrum Canvas Background -->
-    <canvas id="fft-canvas"></canvas>
+    <!-- 3D Wireframe Horizon Grid Canvas Background -->
+    <canvas id="grid-canvas"></canvas>
 
     <nav id="navbar">
         <div class="logo">Saeid<span>.</span></div>
@@ -716,12 +716,12 @@
     </footer>
 
     <script>
-        // --- Ambient FFT Frequency Spectrum Visualizer Canvas ---
-        const canvas = document.getElementById('fft-canvas');
+        // --- 3D Wireframe Horizon Grid Canvas Animation ---
+        const canvas = document.getElementById('grid-canvas');
         const ctx = canvas.getContext('2d');
         
         let width, height;
-        let mouse = { x: null, y: null };
+        let mouse = { x: 0, y: 0, targetX: 0, targetY: 0 };
 
         function initCanvas() {
             width = canvas.width = window.innerWidth;
@@ -729,84 +729,103 @@
         }
 
         window.addEventListener('mousemove', (e) => {
-            mouse.x = e.clientX;
-            mouse.y = e.clientY;
-        });
-
-        window.addEventListener('mouseout', () => {
-            mouse.x = null;
-            mouse.y = null;
+            mouse.targetX = (e.clientX - width / 2) * 0.04;
+            mouse.targetY = (e.clientY - height / 2) * 0.02;
         });
 
         let time = 0;
         function animateCanvas() {
             requestAnimationFrame(animateCanvas);
-            
-            // Clear background with soft fading trail for fluid motion
-            ctx.fillStyle = 'rgba(2, 5, 15, 0.22)';
+
+            // Smooth mouse interpolation
+            mouse.x += (mouse.targetX - mouse.x) * 0.05;
+            mouse.y += (mouse.targetY - mouse.y) * 0.05;
+
+            // Clear screen
+            ctx.fillStyle = '#02050f';
             ctx.fillRect(0, 0, width, height);
 
-            ctx.globalCompositeOperation = 'lighter';
+            const horizonY = height * 0.5 + mouse.y;
 
-            // Draw stacked ambient FFT spectrum curves (simulating an ambient track EQ)
-            const numLayers = 3;
-            for (let l = 0; l < numLayers; l++) {
+            // Draw subtle sky gradient above horizon
+            let skyGrad = ctx.createLinearGradient(0, 0, 0, horizonY);
+            skyGrad.addColorStop(0, '#02050f');
+            skyGrad.addColorStop(1, '#0a1428');
+            ctx.fillStyle = skyGrad;
+            ctx.fillRect(0, 0, width, horizonY);
+
+            // Glowing horizon line
+            ctx.strokeStyle = 'rgba(0, 210, 255, 0.55)';
+            ctx.lineWidth = 2;
+            ctx.shadowColor = '#00d2ff';
+            ctx.shadowBlur = 18;
+            ctx.beginPath();
+            ctx.moveTo(0, horizonY);
+            ctx.lineTo(width, horizonY);
+            ctx.stroke();
+            ctx.shadowBlur = 0; // reset shadow
+
+            const fov = 350;
+            const gridSpacing = 50;
+            const speed = 0.6;
+            
+            time += speed;
+            let zOffset = time % gridSpacing;
+
+            // Draw horizontal grid lines moving forward
+            for (let z = gridSpacing - zOffset; z < 900; z += gridSpacing) {
+                let depthFactor = 1 - (z / 900);
+                ctx.strokeStyle = `rgba(0, 210, 255, ${depthFactor * 0.35})`;
+                ctx.lineWidth = depthFactor * 1.5;
+
                 ctx.beginPath();
-                
-                let baseY = height * (0.55 + l * 0.12);
-                ctx.moveTo(0, height);
-
-                let step = 8; // resolution of curve points
-                for (let x = 0; x <= width + step; x += step) {
-                    // Multi-sine harmonic summation simulating frequency bands
-                    let freq1 = Math.sin(x * 0.004 + time * 0.02 + l * 1.5);
-                    let freq2 = Math.cos(x * 0.009 - time * 0.03) * 0.5;
-                    let freq3 = Math.sin(x * 0.015 + time * 0.01) * 0.25;
+                let first = true;
+                for (let x = -width * 1.5; x <= width * 1.5; x += 30) {
+                    let waveY = Math.sin(x * 0.005 + time * 0.02) * Math.cos(z * 0.005 + time * 0.02) * 18;
                     
-                    let amplitude = (Math.sin(time * 0.005 + x * 0.002) * 45 + 55);
-                    let y = baseY - (Math.abs(freq1 + freq2 + freq3) * amplitude);
+                    let px = (x / z) * fov + (width / 2) + mouse.x;
+                    let py = horizonY + ((waveY + 140) / z) * fov;
 
-                    // Gentle mouse cursor push effect on the spectrum peaks
-                    if (mouse.x !== null && mouse.y !== null) {
-                        let distX = x - mouse.x;
-                        let distY = y - mouse.y;
-                        let dist = Math.sqrt(distX * distX + distY * distY);
-                        if (dist < 200) {
-                            let factor = (1 - (dist / 200)) * 35;
-                            y -= factor * Math.sin(time * 0.1);
+                    if (py >= horizonY) {
+                        if (first) {
+                            ctx.moveTo(px, py);
+                            first = false;
+                        } else {
+                            ctx.lineTo(px, py);
                         }
                     }
-
-                    ctx.lineTo(x, y);
                 }
-
-                ctx.lineTo(width, height);
-                ctx.closePath();
-
-                // Glowing gradient for each frequency layer
-                let gradient = ctx.createLinearGradient(0, height * 0.3, 0, height);
-                if (l === 0) {
-                    gradient.addColorStop(0, 'rgba(0, 210, 255, 0.18)');
-                    gradient.addColorStop(1, 'rgba(0, 210, 255, 0.0)');
-                    ctx.strokeStyle = 'rgba(0, 210, 255, 0.45)';
-                } else if (l === 1) {
-                    gradient.addColorStop(0, 'rgba(58, 134, 255, 0.14)');
-                    gradient.addColorStop(1, 'rgba(58, 134, 255, 0.0)');
-                    ctx.strokeStyle = 'rgba(58, 134, 255, 0.35)';
-                } else {
-                    gradient.addColorStop(0, 'rgba(0, 162, 255, 0.08)');
-                    gradient.addColorStop(1, 'rgba(0, 162, 255, 0.0)');
-                    ctx.strokeStyle = 'rgba(0, 162, 255, 0.25)';
-                }
-
-                ctx.fillStyle = gradient;
-                ctx.fill();
-                ctx.lineWidth = 1.5;
                 ctx.stroke();
             }
 
-            ctx.globalCompositeOperation = 'source-over';
-            time += 0.8;
+            // Draw vertical perspective grid lines
+            for (let x = -width * 1.5; x <= width * 1.5; x += gridSpacing) {
+                ctx.beginPath();
+                let first = true;
+                for (let z = 10; z < 900; z += 15) {
+                    let actualZ = z - zOffset;
+                    if (actualZ <= 5) continue;
+
+                    let waveY = Math.sin(x * 0.005 + time * 0.02) * Math.cos(actualZ * 0.005 + time * 0.02) * 18;
+                    
+                    let px = (x / actualZ) * fov + (width / 2) + mouse.x;
+                    let py = horizonY + ((waveY + 140) / actualZ) * fov;
+
+                    let depthFactor = 1 - (actualZ / 900);
+                    ctx.strokeStyle = `rgba(58, 134, 255, ${depthFactor * 0.3})`;
+                    ctx.lineWidth = depthFactor * 1.2;
+
+                    if (py >= horizonY) {
+                        if (first) {
+                            ctx.moveTo(px, py);
+                            first = false;
+                        } else {
+                            ctx.lineTo(px, py);
+                        }
+                    }
+                }
+                ctx.stroke();
+            }
         }
 
         window.addEventListener('resize', initCanvas);
