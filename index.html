@@ -34,14 +34,14 @@
         }
 
         /* HTML5 Canvas Background */
-        #patchbay-canvas {
+        #chladni-canvas {
             position: fixed;
             top: 0;
             left: 0;
             width: 100vw;
             height: 100vh;
             z-index: -1;
-            pointer-events: auto; /* allows mouse interaction */
+            pointer-events: auto;
         }
 
         /* Ambient Vignette Glow over Canvas */
@@ -505,8 +505,8 @@
 </head>
 <body>
 
-    <!-- Modular Synthesizer Patch Bay Canvas Background -->
-    <canvas id="patchbay-canvas"></canvas>
+    <!-- Chladni Plate Resonance Simulation Canvas -->
+    <canvas id="chladni-canvas"></canvas>
 
     <nav id="navbar">
         <div class="logo">Saeid<span>.</span></div>
@@ -716,52 +716,29 @@
     </footer>
 
     <script>
-        // --- Modular Synthesizer Patch Bay Canvas Animation ---
-        const canvas = document.getElementById('patchbay-canvas');
+        // --- Chladni Plate Resonance Simulation ---
+        const canvas = document.getElementById('chladni-canvas');
         const ctx = canvas.getContext('2d');
         
         let width, height;
-        let nodes = [];
-        let cables = [];
-        let pulses = [];
+        let particles = [];
         let mouse = { x: null, y: null };
+        let time = 0;
 
-        const labels = ["VCO", "VCF", "VCA", "LFO", "ENV", "DELAY", "DSP", "MIDI", "OUT", "IN", "GATE", "TRIG"];
+        const numParticles = 1200;
 
         function initCanvas() {
             width = canvas.width = window.innerWidth;
             height = canvas.height = window.innerHeight;
 
-            // Create synth patch nodes
-            nodes = [];
-            const count = Math.floor((width * height) / 45000); // density responsive
-            for (let i = 0; i < count; i++) {
-                nodes.push({
+            particles = [];
+            for (let i = 0; i < numParticles; i++) {
+                particles.push({
                     x: Math.random() * width,
                     y: Math.random() * height,
-                    vx: (Math.random() - 0.5) * 0.4,
-                    vy: (Math.random() - 0.5) * 0.4,
-                    radius: Math.random() * 4 + 5,
-                    label: labels[Math.floor(Math.random() * labels.length)],
-                    pulseTimer: Math.random() * 100
+                    vx: 0,
+                    vy: 0
                 });
-            }
-
-            // Create cables connecting nearby nodes
-            cables = [];
-            for (let i = 0; i < nodes.length; i++) {
-                for (let j = i + 1; j < nodes.length; j++) {
-                    let dx = nodes[i].x - nodes[j].x;
-                    let dy = nodes[i].y - nodes[j].y;
-                    let dist = Math.sqrt(dx * dx + dy * dy);
-                    if (dist < 220) {
-                        cables.push({
-                            from: i,
-                            to: j,
-                            progress: Math.random()
-                        });
-                    }
-                }
             }
         }
 
@@ -776,114 +753,87 @@
         });
 
         window.addEventListener('click', (e) => {
-            // Spawn an interactive signal pulse burst at click location
-            for (let i = 0; i < nodes.length; i++) {
-                let dx = nodes[i].x - e.clientX;
-                let dy = nodes[i].y - e.clientY;
-                if (Math.sqrt(dx * dx + dy * dy) < 150) {
-                    nodes[i].pulseTimer = 0;
+            // Excitation burst on click: scatter particles outwards
+            particles.forEach(p => {
+                let dx = p.x - e.clientX;
+                let dy = p.y - e.clientY;
+                let dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < 200 && dist > 1) {
+                    p.vx += (dx / dist) * (Math.random() * 8 + 4);
+                    p.vy += (dy / dist) * (Math.random() * 8 + 4);
                 }
-            }
+            });
         });
 
         function animateCanvas() {
             requestAnimationFrame(animateCanvas);
 
-            // Soft clearing trail
-            ctx.fillStyle = 'rgba(2, 5, 15, 0.25)';
+            // Dark fading trail to give smooth motion blur
+            ctx.fillStyle = 'rgba(2, 5, 15, 0.22)';
             ctx.fillRect(0, 0, width, height);
 
-            // Update and draw cables (patch cords)
-            cables.forEach(cable => {
-                let n1 = nodes[cable.from];
-                let n2 = nodes[cable.to];
+            time += 0.005;
 
-                let dx = n1.x - n2.x;
-                let dy = n1.y - n2.y;
-                let dist = Math.sqrt(dx * dx + dy * dy);
+            // Slowly morphing Chladni modal frequencies
+            let n = 3 + Math.sin(time * 0.5) * 1.5;
+            let m = 2 + Math.cos(time * 0.4) * 1.5;
+            const L = Math.min(width, height) * 0.75;
+            const centerX = width / 2;
+            const centerY = height / 2;
 
-                if (dist < 280) {
-                    let alpha = (1 - (dist / 280)) * 0.35;
-                    ctx.strokeStyle = `rgba(58, 134, 255, ${alpha})`;
-                    ctx.lineWidth = 1.2;
+            particles.forEach(p => {
+                // Normalize coordinates relative to center plate
+                let nx = (p.x - centerX) / L * Math.PI * n;
+                let ny = (p.y - centerY) / L * Math.PI * m;
 
-                    // Draw organic hanging curve (simulating patch cable slack)
-                    ctx.beginPath();
-                    ctx.moveTo(n1.x, n1.y);
-                    let cx = (n1.x + n2.x) / 2;
-                    let cy = (n1.y + n2.y) / 2 + 25; // cable droop
-                    ctx.quadraticCurveTo(cx, cy, n2.x, n2.y);
-                    ctx.stroke();
+                // Chladni plate equation: W(x,y) = a * sin(n*pi*x/L) * sin(m*pi*y/L) + b * sin(m*pi*x/L) * sin(n*pi*y/L)
+                let val = Math.sin(nx) * Math.sin(ny) + Math.sin(ny) * Math.sin(nx);
+                
+                // Gradient approximation to pull particles toward nodal lines (where val is near 0)
+                let eps = 0.05;
+                let valX = Math.sin(nx + eps) * Math.sin(ny) + Math.sin(ny) * Math.sin(nx + eps);
+                let valY = Math.sin(nx) * Math.sin(ny + eps) + Math.sin(ny + eps) * Math.sin(nx);
+                
+                let gx = (valX - val) / eps;
+                let gy = (valY - val) / eps;
 
-                    // Traveling signal pulse along cable from left to right
-                    cable.progress += 0.006;
-                    if (cable.progress > 1) cable.progress = 0;
+                // Apply nodal attraction force
+                p.vx = p.vx * 0.88 - gx * val * 0.35;
+                p.vy = p.vy * 0.88 - gy * val * 0.35;
 
-                    let t = cable.progress;
-                    // Quadratic bezier point formula
-                    let px = (1 - t) * (1 - t) * n1.x + 2 * (1 - t) * t * cx + t * t * n2.x;
-                    let py = (1 - t) * (1 - t) * n1.y + 2 * (1 - t) * t * cy + t * t * n2.y;
-
-                    ctx.fillStyle = '#00d2ff';
-                    ctx.shadowColor = '#00d2ff';
-                    ctx.shadowBlur = 10;
-                    ctx.beginPath();
-                    ctx.arc(px, py, 2.2, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.shadowBlur = 0;
-                }
-            });
-
-            // Update and draw nodes
-            nodes.forEach(node => {
-                node.x += node.vx;
-                node.y += node.vy;
-
-                // Bounce off screen bounds
-                if (node.x < 30 || node.x > width - 30) node.vx *= -1;
-                if (node.y < 30 || node.y > height - 30) node.vy *= -1;
-
-                // Mouse interaction / attraction
+                // Mouse interaction push
                 if (mouse.x !== null && mouse.y !== null) {
-                    let mdx = node.x - mouse.x;
-                    let mdy = node.y - mouse.y;
+                    let mdx = p.x - mouse.x;
+                    let mdy = p.y - mouse.y;
                     let mDist = Math.sqrt(mdx * mdx + mdy * mdy);
-                    if (mDist < 160) {
-                        let force = (1 - (mDist / 160)) * 1.5;
-                        node.x += (mdx / mDist) * force;
-                        node.y += (mdy / mDist) * force;
+                    if (mDist < 140 && mDist > 1) {
+                        p.vx += (mdx / mDist) * 0.4;
+                        p.vy += (mdy / mDist) * 0.4;
                     }
                 }
 
-                node.pulseTimer += 0.02;
-                let pulseAlpha = (Math.sin(node.pulseTimer) + 1) / 2;
+                // Add slight Brownian motion / thermal plate agitation
+                p.vx += (Math.random() - 0.5) * 0.3;
+                p.vy += (Math.random() - 0.5) * 0.3;
 
-                // Outer terminal ring
-                ctx.strokeStyle = `rgba(0, 210, 255, ${0.3 + pulseAlpha * 0.5})`;
-                ctx.lineWidth = 1.5;
-                ctx.beginPath();
-                ctx.arc(node.x, node.y, node.radius + 3, 0, Math.PI * 2);
-                ctx.stroke();
+                p.x += p.vx;
+                p.y += p.vy;
 
-                // Inner module jack
-                ctx.fillStyle = '#0a1226';
-                ctx.beginPath();
-                ctx.arc(node.x, node.y, node.radius, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.strokeStyle = '#3a86ff';
-                ctx.stroke();
+                // Screen boundary wrap-around
+                if (p.x < 0) p.x = width;
+                if (p.x > width) p.x = 0;
+                if (p.y < 0) p.y = height;
+                if (p.y > height) p.y = 0;
 
-                // Core pin light
-                ctx.fillStyle = pulseAlpha > 0.8 ? '#00d2ff' : '#3a86ff';
-                ctx.beginPath();
-                ctx.arc(node.x, node.y, 2, 0, Math.PI * 2);
-                ctx.fill();
+                // Render particle
+                let speed = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
+                let alpha = Math.min(Math.max(speed * 0.15, 0.2), 0.9);
 
-                // Module label
-                ctx.fillStyle = 'rgba(148, 163, 184, 0.7)';
-                ctx.font = '9px monospace';
-                ctx.fillText(node.label, node.x + node.radius + 6, node.y + 3);
+                ctx.fillStyle = speed > 2 ? '#00d2ff' : '#3a86ff';
+                ctx.globalAlpha = alpha;
+                ctx.fillRect(p.x, p.y, 1.8, 1.8);
             });
+            ctx.globalAlpha = 1.0;
         }
 
         window.addEventListener('resize', initCanvas);
